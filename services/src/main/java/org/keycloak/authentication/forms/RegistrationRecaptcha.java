@@ -46,12 +46,15 @@ import org.keycloak.services.validation.Validation;
 import org.keycloak.util.JsonSerialization;
 
 import java.io.InputStream;
+
 import jakarta.ws.rs.core.MultivaluedMap;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
@@ -65,10 +68,11 @@ public class RegistrationRecaptcha implements FormAction, FormActionFactory, Con
     public static final String RECAPTCHA_REFERENCE_CATEGORY = "recaptcha";
     public static final String SITE_KEY = "site.key";
     public static final String SITE_SECRET = "secret";
-    public static final String USE_RECAPTCHA_NET = "useRecaptchaNet";
     private static final Logger logger = Logger.getLogger(RegistrationRecaptcha.class);
 
     public static final String PROVIDER_ID = "registration-recaptcha-action";
+    public static final String SCRIPT_LINK = "scriptLink";
+    public static final String SITE_VERIFY_LINK = "siteVerifyLink";
 
     @Override
     public String getDisplayType() {
@@ -89,25 +93,27 @@ public class RegistrationRecaptcha implements FormAction, FormActionFactory, Con
             AuthenticationExecutionModel.Requirement.REQUIRED,
             AuthenticationExecutionModel.Requirement.DISABLED
     };
+
     @Override
     public AuthenticationExecutionModel.Requirement[] getRequirementChoices() {
         return REQUIREMENT_CHOICES;
     }
+
     @Override
     public void buildPage(FormContext context, LoginFormsProvider form) {
         AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();
-        String userLanguageTag = context.getSession().getContext().resolveLocale(context.getUser()).toLanguageTag();
         if (captchaConfig == null || captchaConfig.getConfig() == null
                 || captchaConfig.getConfig().get(SITE_KEY) == null
                 || captchaConfig.getConfig().get(SITE_SECRET) == null
-                ) {
+        ) {
             form.addError(new FormMessage(null, Messages.RECAPTCHA_NOT_CONFIGURED));
             return;
         }
         String siteKey = captchaConfig.getConfig().get(SITE_KEY);
+        String scriptLink = captchaConfig.getConfig().get(SCRIPT_LINK);
         form.setAttribute("recaptchaRequired", true);
         form.setAttribute("recaptchaSiteKey", siteKey);
-        form.addScript("https://www." + getRecaptchaDomain(captchaConfig) + "/recaptcha/api.js?hl=" + userLanguageTag);
+        form.addScript(scriptLink);
     }
 
     @Override
@@ -116,12 +122,10 @@ public class RegistrationRecaptcha implements FormAction, FormActionFactory, Con
         List<FormMessage> errors = new ArrayList<>();
         boolean success = false;
         context.getEvent().detail(Details.REGISTER_METHOD, "form");
-
         String captcha = formData.getFirst(G_RECAPTCHA_RESPONSE);
         if (!Validation.isBlank(captcha)) {
             AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();
             String secret = captchaConfig.getConfig().get(SITE_SECRET);
-
             success = validateRecaptcha(context, success, captcha, secret);
         }
         if (success) {
@@ -133,26 +137,14 @@ public class RegistrationRecaptcha implements FormAction, FormActionFactory, Con
             context.validationError(formData, errors);
             context.excludeOtherErrors();
             return;
-
-
         }
-    }
-
-    private String getRecaptchaDomain(AuthenticatorConfigModel config) {
-        Boolean useRecaptcha = Optional.ofNullable(config)
-                .map(configModel -> configModel.getConfig())
-                .map(cfg -> Boolean.valueOf(cfg.get(USE_RECAPTCHA_NET)))
-                .orElse(false);
-        if (useRecaptcha) {
-            return "recaptcha.net";
-        }
-
-        return "google.com";
     }
 
     protected boolean validateRecaptcha(ValidationContext context, boolean success, String captcha, String secret) {
+        AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();
+        String siteVerifyLink = captchaConfig.getConfig().get(SITE_VERIFY_LINK);
         CloseableHttpClient httpClient = context.getSession().getProvider(HttpClientProvider.class).getHttpClient();
-        HttpPost post = new HttpPost("https://www." + getRecaptchaDomain(context.getAuthenticatorConfig()) + "/recaptcha/api/siteverify");
+        HttpPost post = new HttpPost(siteVerifyLink);
         List<NameValuePair> formparams = new LinkedList<>();
         formparams.add(new BasicNameValuePair("secret", secret));
         formparams.add(new BasicNameValuePair("response", captcha));
@@ -173,6 +165,7 @@ public class RegistrationRecaptcha implements FormAction, FormActionFactory, Con
         } catch (Exception e) {
             ServicesLogger.LOGGER.recaptchaFailed(e);
         }
+        logger.warn("Recaptcha success: " + success);
         return success;
     }
 
@@ -238,22 +231,31 @@ public class RegistrationRecaptcha implements FormAction, FormActionFactory, Con
         ProviderConfigProperty property;
         property = new ProviderConfigProperty();
         property.setName(SITE_KEY);
-        property.setLabel("Recaptcha Site Key");
+        property.setLabel("Captcha Site Key");
         property.setType(ProviderConfigProperty.STRING_TYPE);
-        property.setHelpText("Google Recaptcha Site Key");
+        property.setHelpText("Captcha Site Key");
         CONFIG_PROPERTIES.add(property);
         property = new ProviderConfigProperty();
         property.setName(SITE_SECRET);
-        property.setLabel("Recaptcha Secret");
+        property.setLabel("Secret");
         property.setType(ProviderConfigProperty.STRING_TYPE);
-        property.setHelpText("Google Recaptcha Secret");
+        property.setHelpText("Captcha Secret");
         CONFIG_PROPERTIES.add(property);
 
         property = new ProviderConfigProperty();
-        property.setName(USE_RECAPTCHA_NET);
-        property.setLabel("use recaptcha.net");
-        property.setType(ProviderConfigProperty.BOOLEAN_TYPE);
-        property.setHelpText("Use recaptcha.net? (or else google.com)");
+        property.setName(SCRIPT_LINK);
+        property.setLabel("Script URL");
+        property.setType(ProviderConfigProperty.STRING_TYPE);
+        property.setDefaultValue("");
+        property.setHelpText("The script that rendered in the client-end");
+        CONFIG_PROPERTIES.add(property);
+
+        property = new ProviderConfigProperty();
+        property.setName(SITE_VERIFY_LINK);
+        property.setLabel("Site Verify URL");
+        property.setType(ProviderConfigProperty.STRING_TYPE);
+        property.setDefaultValue("");
+        property.setHelpText("The URL used in the server-end to verify the captcha");
         CONFIG_PROPERTIES.add(property);
     }
 

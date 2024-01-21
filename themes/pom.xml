@@ -21,9 +21,7 @@
         <maven.build.cache.exclude.value.3>src/main/resources/theme/keycloak.v2/account/src/node_modules</maven.build.cache.exclude.value.3>
         <maven.build.cache.exclude.value.4>src/main/resources/theme/keycloak.v2/account/src/web_modules</maven.build.cache.exclude.value.4>
         <maven.build.cache.exclude.value.6>src/main/resources/theme/keycloak.v2/account/resources</maven.build.cache.exclude.value.6>
-        <maven.build.cache.exclude.glob.6>*.js</maven.build.cache.exclude.glob.6>
         <maven.build.cache.exclude.value.7>src/main/resources/theme/keycloak.v2/account/resources</maven.build.cache.exclude.value.7>
-        <maven.build.cache.exclude.glob.7>*.js.map</maven.build.cache.exclude.glob.7>
         <maven.build.cache.exclude.value.8>src/main/resources/theme/keycloak.v2/account/resources/public/app.css</maven.build.cache.exclude.value.8>
         <maven.build.cache.exclude.value.9>src/main/resources/theme/keycloak.v2/account/web_modules</maven.build.cache.exclude.value.9>
         <maven.build.cache.exclude.value.10>src/main/resources/theme/keycloak.v2/welcome/node_modules</maven.build.cache.exclude.value.10>
@@ -62,7 +60,6 @@
                     <exclude>**/*.sh</exclude>
                     <exclude>**/.bin/**</exclude>
                     <exclude>**/bin/**</exclude>
-                    <exclude>**/build/**</exclude>
                     <exclude>**/docs/**</exclude>
                     <exclude>**/demo/**</exclude>
                     <exclude>**/devtools/**</exclude>
