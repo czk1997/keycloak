@@ -20,16 +20,20 @@ package org.keycloak.authentication.authenticators.browser;
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.Authenticator;
+import org.keycloak.authentication.authenticators.util.RecaptchaUtil;
 import org.keycloak.forms.login.LoginFormsProvider;
+import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.utils.FormMessage;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.managers.AuthenticationManager;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import org.keycloak.services.messages.Messages;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
@@ -37,12 +41,21 @@ import jakarta.ws.rs.core.Response;
  */
 public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator implements Authenticator {
     protected static ServicesLogger log = ServicesLogger.LOGGER;
+    public static final String SCRIPT_LINK = "scriptLink";
+    public static final String SITE_VERIFY_LINK = "siteVerifyLink";
+    public static final String CPATCHA_ENABLED = "captcha.enabled";
+    public static final String SITE_KEY = "site.key";
+    public static final String SITE_SECRET = "secret";
 
     @Override
     public void action(AuthenticationFlowContext context) {
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         if (formData.containsKey("cancel")) {
             context.cancelLogin();
+            return;
+        }
+        boolean captchaResult = RecaptchaUtil.validate(context);
+        if (!captchaResult) {
             return;
         }
         if (!validateForm(context, formData)) {
@@ -78,6 +91,7 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
                 }
             }
         }
+        RecaptchaUtil.authenticateRecaptcha(context);
         Response challengeResponse = challenge(context, formData);
         context.challenge(challengeResponse);
     }
