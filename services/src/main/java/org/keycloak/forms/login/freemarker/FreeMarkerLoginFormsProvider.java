@@ -29,6 +29,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
@@ -115,7 +118,9 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
     protected boolean detachedAuthSession = false;
 
     protected KeycloakSession session;
-    /** authenticationSession can be null for some renderings, mainly error pages */
+    /**
+     * authenticationSession can be null for some renderings, mainly error pages
+     */
     protected AuthenticationSessionModel authenticationSession;
     protected RealmModel realm;
     protected ClientModel client;
@@ -126,6 +131,7 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
     protected UserModel user;
 
     protected final Map<String, Object> attributes = new HashMap<>();
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     public FreeMarkerLoginFormsProvider(KeycloakSession session) {
         this.session = session;
@@ -164,8 +170,8 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
                 page = LoginFormsPages.LOGIN_UPDATE_PROFILE;
                 break;
             case UPDATE_EMAIL:
-                UpdateProfileContext updateEmailContext = new UserUpdateProfileContext(realm,user);
-                attributes.put("user",new ProfileBean(updateEmailContext,formData));
+                UpdateProfileContext updateEmailContext = new UserUpdateProfileContext(realm, user);
+                attributes.put("user", new ProfileBean(updateEmailContext, formData));
                 actionMessage = Messages.UPDATE_EMAIL;
                 page = LoginFormsPages.UPDATE_EMAIL;
                 break;
@@ -175,8 +181,8 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
                 page = LoginFormsPages.LOGIN_UPDATE_PASSWORD;
                 break;
             case VERIFY_EMAIL:
-                UpdateProfileContext userBasedContext1 = new UserUpdateProfileContext(realm,user);
-                attributes.put("user",new ProfileBean(userBasedContext1,formData));
+                UpdateProfileContext userBasedContext1 = new UserUpdateProfileContext(realm, user);
+                attributes.put("user", new ProfileBean(userBasedContext1, formData));
                 actionMessage = Messages.VERIFY_EMAIL;
                 page = LoginFormsPages.LOGIN_VERIFY_EMAIL;
                 break;
@@ -225,8 +231,8 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
         if (!isDetachedAuthenticationSession()) {
             if ((AuthenticationSessionModel.Action.AUTHENTICATE.name().equals(authenticationSession.getAction())) ||
-                (AuthenticationSessionModel.Action.REQUIRED_ACTIONS.name().equals(authenticationSession.getAction())) ||
-                (AuthenticationSessionModel.Action.OAUTH_GRANT.name().equals(authenticationSession.getAction()))) {
+                    (AuthenticationSessionModel.Action.REQUIRED_ACTIONS.name().equals(authenticationSession.getAction())) ||
+                    (AuthenticationSessionModel.Action.OAUTH_GRANT.name().equals(authenticationSession.getAction()))) {
                 setAttribute("authenticationSession", new AuthenticationSessionBean(authenticationSession.getParentSession().getId(), authenticationSession.getTabId()));
             }
         }
@@ -273,7 +279,7 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
                 attributes.put("configuredOtpCredentials", new TotpLoginBean(session, realm, user, (String) this.attributes.get(OTPFormAuthenticator.SELECTED_OTP_CREDENTIAL_ID)));
                 break;
             case REGISTER:
-                RegisterBean rb = new RegisterBean(formData,session);
+                RegisterBean rb = new RegisterBean(formData, session);
                 //legacy bean for static template
                 attributes.put("register", rb);
                 //bean for dynamic template
@@ -308,7 +314,8 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
         return processTemplate(theme, Templates.getTemplate(page), locale);
     }
-    
+
+
     /**
      * Get sure that correct hostname and path is used for totp form.
      * Relevant when running in proxy mode.
@@ -344,9 +351,9 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
     /**
      * Prepare base uri builder for later use
-     * 
+     *
      * @param resetRequestUriParams - for some reason Resteasy 2.3.7 doesn't like query params and form params with the same name and will null out the code form param, so we have to reset them for some pages
-     * @return base uri builder  
+     * @return base uri builder
      */
     protected UriBuilder prepareBaseUriBuilder(boolean resetRequestUriParams) {
         String requestURI = uriInfo.getBaseUri().getPath();
@@ -366,7 +373,7 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
     /**
      * Get Theme used for page rendering.
-     * 
+     *
      * @return theme for page rendering, never null
      * @throws IOException in case of Theme loading problem
      */
@@ -376,8 +383,8 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
     /**
      * Load message bundle and place it into <code>msg</code> template attribute. Also load Theme properties and place them into <code>properties</code> template attribute.
-     * 
-     * @param theme actual Theme to load bundle from
+     *
+     * @param theme  actual Theme to load bundle from
      * @param locale to load bundle for
      * @return message bundle for other use
      */
@@ -403,8 +410,8 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
     /**
      * Handle messages to be shown on the page - set them to template attributes
-     * 
-     * @param locale to be used for message text loading
+     *
+     * @param locale         to be used for message text loading
      * @param messagesBundle to be used for message text loading
      * @see #messageType
      * @see #messages
@@ -445,13 +452,12 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
     /**
      * Create common attributes used in all templates.
-     * 
-     * @param theme actual Theme used (provided by <code>getTheme()</code>) 
-     * @param locale actual locale
+     *
+     * @param theme          actual Theme used (provided by <code>getTheme()</code>)
+     * @param locale         actual locale
      * @param messagesBundle actual message bundle (provided by <code>handleThemeResources()</code>)
      * @param baseUriBuilder actual base uri builder (provided by <code>prepareBaseUriBuilder()</code>)
-     * @param page in case if common page is rendered, is null if called from <code>createForm()</code>
-     * 
+     * @param page           in case if common page is rendered, is null if called from <code>createForm()</code>
      */
     protected void createCommonAttributes(Theme theme, Locale locale, Properties messagesBundle, UriBuilder baseUriBuilder, LoginFormsPages page) {
         URI baseUri = baseUriBuilder.build();
@@ -538,21 +544,29 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
 
     /**
      * Process FreeMarker template and prepare Response. Some fields are used for rendering also.
-     * 
-     * @param theme to be used (provided by <code>getTheme()</code>)
+     *
+     * @param theme        to be used (provided by <code>getTheme()</code>)
      * @param templateName name of the template to be rendered
-     * @param locale to be used
+     * @param locale       to be used
      * @return Response object to be returned to the browser, never null
      */
     protected Response processTemplate(Theme theme, String templateName, Locale locale) {
         try {
-            String result = freeMarker.processTemplate(attributes, templateName, theme);
-            Response.ResponseBuilder builder = Response.status(status == null ? Response.Status.OK : status).type(MediaType.TEXT_HTML_UTF_8_TYPE).language(locale).entity(result);
+            String result = null;
+            Response.ResponseBuilder builder = null;
+//            if (theme.getName().equals("keycloak") || theme.getName().equals("base")) {
+//                result = freeMarker.processTemplate(attributes, templateName, theme);
+//                builder = Response.status(status == null ? Response.Status.OK : status).type(MediaType.TEXT_HTML_UTF_8_TYPE).language(locale).entity(result);
+//            } else {
+//                attributes.put("template", templateName);
+                result = objectMapper.writeValueAsString(attributes);
+                builder = Response.status(status == null ? Response.Status.OK : status).type(MediaType.APPLICATION_JSON_TYPE).language(locale).entity(result);
+            //}
             for (Map.Entry<String, String> entry : httpResponseHeaders.entrySet()) {
                 builder.header(entry.getKey(), entry.getValue());
             }
             return builder.build();
-        } catch (FreeMarkerException e) {
+        } catch ( JsonProcessingException e) {
             logger.error("Failed to process template", e);
             return Response.serverError().build();
         }
@@ -563,11 +577,13 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
         return createResponse(LoginFormsPages.LOGIN);
     }
 
-    public Response createLoginUsername(){
+    public Response createLoginUsername() {
         return createResponse(LoginFormsPages.LOGIN_USERNAME);
-    };
+    }
 
-    public Response createLoginPassword(){
+    ;
+
+    public Response createLoginPassword() {
         return createResponse(LoginFormsPages.LOGIN_PASSWORD);
     }
 
@@ -580,7 +596,8 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
         return createResponse(LoginFormsPages.LOGIN_RESET_PASSWORD);
     }
 
-    @Override public Response createOtpReset() {
+    @Override
+    public Response createOtpReset() {
         return createResponse(LoginFormsPages.LOGIN_RESET_OTP);
     }
 
@@ -606,7 +623,7 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
             if (this.formData == null) {
                 this.formData = new MultivaluedHashMap<>();
             }
-            if(this.realm.isRegistrationEmailAsUsername()) {
+            if (this.realm.isRegistrationEmailAsUsername()) {
                 String value = this.formData.getFirst("email");
                 if (value == null || value.trim().isEmpty()) {
                     this.formData.putSingle("email", loginHint);
@@ -875,7 +892,7 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
         return this;
     }
 
-    public LoginFormsProvider setAuthContext(AuthenticationFlowContext context){
+    public LoginFormsProvider setAuthContext(AuthenticationFlowContext context) {
         this.context = context;
         return this;
     }

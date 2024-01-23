@@ -61,6 +61,9 @@ public class RecaptchaUtil {
 
     public static boolean validate(AuthenticationFlowContext context) {
         AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();
+        if (captchaConfig == null || captchaConfig.getConfig() == null) {
+            return true;
+        }
         String enabled = captchaConfig.getConfig().get(CPATCHA_ENABLED);
         if (enabled == null || BooleanType.FALSE.value().equals(enabled)) {
             return true;
