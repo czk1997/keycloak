@@ -18,6 +18,7 @@ package org.keycloak.forms.login.freemarker.model;
 
 import static org.keycloak.protocol.oidc.grants.device.DeviceGrantType.realmOAuth2DeviceVerificationAction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.jboss.logging.Logger;
 import org.keycloak.models.RealmModel;
 import org.keycloak.services.Urls;
@@ -78,7 +79,7 @@ public class UrlBean {
     public String getRegistrationUrl() {
         return Urls.realmRegisterPage(baseURI, realm).toString();
     }
-
+    @JsonIgnore
     public String getLoginUpdateProfileUrl() {
         return Urls.loginActionUpdateProfile(baseURI, realm).toString();
     }
@@ -86,7 +87,7 @@ public class UrlBean {
     public String getLoginResetCredentialsUrl() {
         return Urls.loginResetCredentials(baseURI, realm).toString();
     }
-
+    @JsonIgnore
     public String getLoginUsernameReminderUrl() {
         return Urls.loginUsernameReminder(baseURI, realm).toString();
     }

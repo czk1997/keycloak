@@ -28,8 +28,12 @@ import org.keycloak.forms.login.MessageType;
  */
 public class MessagesPerFieldBean {
 
-    private Map<String, MessageBean> messagesPerField = new HashMap<String, MessageBean>();
 
+
+    private Map<String, MessageBean> messagesPerField = new HashMap<String, MessageBean>();
+    public Map<String, MessageBean> getMessagesPerField() {
+        return messagesPerField;
+    }
     public void addMessage(String field, String messageText, MessageType messageType) {
         if (messageText == null || messageText.trim().isEmpty())
             return;
