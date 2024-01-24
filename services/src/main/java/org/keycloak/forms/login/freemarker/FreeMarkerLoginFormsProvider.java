@@ -555,18 +555,18 @@ public class FreeMarkerLoginFormsProvider implements LoginFormsProvider {
             String result = null;
             Response.ResponseBuilder builder = null;
 //            if (theme.getName().equals("keycloak") || theme.getName().equals("base")) {
-//                result = freeMarker.processTemplate(attributes, templateName, theme);
-//                builder = Response.status(status == null ? Response.Status.OK : status).type(MediaType.TEXT_HTML_UTF_8_TYPE).language(locale).entity(result);
+                result = freeMarker.processTemplate(attributes, templateName, theme);
+                builder = Response.status(status == null ? Response.Status.OK : status).type(MediaType.TEXT_HTML_UTF_8_TYPE).language(locale).entity(result);
 //            } else {
 //                attributes.put("template", templateName);
-                result = objectMapper.writeValueAsString(attributes);
-                builder = Response.status(status == null ? Response.Status.OK : status).type(MediaType.APPLICATION_JSON_TYPE).language(locale).entity(result);
-            //}
+//                result = objectMapper.writeValueAsString(attributes);
+//                builder = Response.status(status == null ? Response.Status.OK : status).type(MediaType.APPLICATION_JSON_TYPE).language(locale).entity(result);
+//            }
             for (Map.Entry<String, String> entry : httpResponseHeaders.entrySet()) {
                 builder.header(entry.getKey(), entry.getValue());
             }
             return builder.build();
-        } catch ( JsonProcessingException e) {
+        } catch (FreeMarkerException e) {
             logger.error("Failed to process template", e);
             return Response.serverError().build();
         }
