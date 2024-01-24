@@ -21,7 +21,7 @@
     <parent>
         <artifactId>keycloak-crypto-parent</artifactId>
         <groupId>org.keycloak</groupId>
-        <version>23.0.4</version>
+        <version>24.0.4.shadow</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>

@@ -21,7 +21,7 @@
     <parent>
         <groupId>org.keycloak.testsuite</groupId>
         <artifactId>integration-arquillian</artifactId>
-        <version>23.0.4</version>
+        <version>24.0.4.shadow</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -33,9 +33,10 @@
         <script.suffix>sh</script.suffix>
 
         <!--app container versions-->
-        <eap.version>7.4.9.GA-redhat-00003</eap.version>
+        <eap.version>${eap7.version}</eap.version>
         <eap6.version>7.5.21.Final-redhat-1</eap6.version>
         <eap71.version>7.1.5.GA-redhat-00002</eap71.version>
+        <eap7.version>7.4.9.GA-redhat-00003</eap7.version>
         <jboss.as.version>7.1.1.Final</jboss.as.version>
 
         <jboss.default.worker.io-threads>16</jboss.default.worker.io-threads>

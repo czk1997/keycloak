@@ -31,11 +31,11 @@
     </description>
     <groupId>org.keycloak</groupId>
     <artifactId>keycloak-parent</artifactId>
-    <version>23.0.4</version>
+    <version>24.0.4.shadow</version>
     <packaging>pom</packaging>
 
     <properties>
-        <project.version.npm>23.0.4</project.version.npm>
+        <project.version.npm>24.0.4+shadow</project.version.npm>
 
         <asciidoctor.plugin.version>1.5.8</asciidoctor.plugin.version>
 
@@ -96,7 +96,6 @@
         <hibernate-orm.plugin.version>6.2.13.Final</hibernate-orm.plugin.version>
         <hibernate.c3p0.version>6.2.13.Final</hibernate.c3p0.version>
         <infinispan.version>14.0.21.Final</infinispan.version>
-        <infinispan.protostream.processor.version>4.6.5.Final</infinispan.protostream.processor.version>
 
         <!--JAKARTA-->
         <jakarta.mail.version>2.1.1</jakarta.mail.version>
@@ -166,7 +165,7 @@
         <mssql-jdbc.version>12.2.0.jre11</mssql-jdbc.version>
         <oracledb.version>19.3</oracledb.version>
         <!-- this is the oracle driver version also used in the Quarkus BOM -->
-        <oracle-jdbc.version>23.3.0.23.09</oracle-jdbc.version>
+        <oracle-jdbc.version>23.2.0.0</oracle-jdbc.version>
 
         <!-- Test -->
         <greenmail.version>2.1.0-alpha-1</greenmail.version>
@@ -213,8 +212,7 @@
         <tomcat9.version>9.0.16</tomcat9.version>
 
         <!-- Spring Boot versions, used for tests -->
-        <spring-boot24.version>2.4.13</spring-boot24.version>
-        <spring-boot26.version>2.6.1</spring-boot26.version>
+        <spring-boot27.version>2.7.14</spring-boot27.version>
 
         <!-- webauthn support -->
         <webauthn4j.version>0.21.5.RELEASE</webauthn4j.version>
@@ -224,7 +222,7 @@
         <org.wildfly.galleon-plugins.version>6.5.2.Final</org.wildfly.galleon-plugins.version>
         <org.jboss.galleon.version>5.2.2.Final</org.jboss.galleon.version>
         <org.wildfly.maven.plugins.licenses-plugin.version>2.3.1.Final</org.wildfly.maven.plugins.licenses-plugin.version>
-        
+
         <!-- Used to test SAML Galleon feature-pack layers discovery -->
         <version.org.wildfly.glow>1.0.0.Alpha8</version.org.wildfly.glow>
 
@@ -310,6 +308,49 @@
     <dependencyManagement>
 
         <dependencies>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-bom</artifactId>
+                <version>${infinispan.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-jboss-marshalling</artifactId>
+                <version>${infinispan.version}</version>
+                <exclusions>
+                    <!-- this conflicts with infinispan-*-jakarta -->
+                    <exclusion>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-commons</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.infinispan</groupId>
+                <artifactId>infinispan-cachestore-remote</artifactId>
+                <version>${infinispan.version}</version>
+                <exclusions>
+                    <!-- this conflicts with infinispan-*-jakarta -->
+                    <exclusion>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-commons</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.infinispan</groupId>
+                        <artifactId>infinispan-client-hotrod</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
             <dependency>
                 <groupId>io.quarkus.platform</groupId>
                 <artifactId>quarkus-bom</artifactId>
@@ -840,135 +881,6 @@
                 <groupId>org.wildfly.security.elytron-web</groupId>
                 <artifactId>undertow-server</artifactId>
                 <version>${elytron.undertow-server.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-core</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-core-jakarta</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-commons</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-commons-jakarta</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-cachestore-remote</artifactId>
-                <version>${infinispan.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-commons</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-jboss-marshalling</artifactId>
-                <version>${infinispan.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-commons</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-server-core</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-server-router</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-server-runtime</artifactId>
-                <version>${infinispan.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>*</groupId>
-                        <artifactId>*</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-server-rest</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-api</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-client-hotrod-jakarta</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-query-dsl</artifactId>
-                <version>${infinispan.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-commons</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-remote-query-client</artifactId>
-                <version>${infinispan.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.infinispan</groupId>
-                        <artifactId>infinispan-commons</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan</groupId>
-                <artifactId>infinispan-component-annotations</artifactId>
-                <version>${infinispan.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.protostream</groupId>
-                <artifactId>protostream-processor</artifactId>
-                <scope>provided</scope>
-                <version>${infinispan.protostream.processor.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.protostream</groupId>
-                <artifactId>protostream</artifactId>
-                <version>${infinispan.protostream.processor.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.infinispan.protostream</groupId>
-                <artifactId>protostream-types</artifactId>
-                <version>${infinispan.protostream.processor.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jboss.marshalling</groupId>
@@ -1734,7 +1646,7 @@
                 <artifactId>jboss-servlet-api_4.0_spec</artifactId>
                 <version>${jboss-servlet-api_4.0_spec}</version>
             </dependency>
-            
+
             <!-- Galleon layer testing with WildFly Glow -->
             <dependency>
                 <groupId>org.wildfly.glow</groupId>
