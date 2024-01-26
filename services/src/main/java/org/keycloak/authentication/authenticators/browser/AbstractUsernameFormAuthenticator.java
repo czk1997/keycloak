@@ -76,16 +76,14 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
                 form.setError(error);
             }
         }
-        return createLoginForm(form,context);
+        return createLoginForm(form);
     }
 
     protected Response createLoginForm(LoginFormsProvider form) {
         return form.createLoginUsernamePassword();
     }
 
-    protected Response createLoginForm(LoginFormsProvider form, AuthenticationFlowContext context) {
-        return form.createLoginUsernamePassword();
-    }
+
     protected String disabledByBruteForceError() {
         return Messages.INVALID_USER;
     }

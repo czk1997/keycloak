@@ -28,7 +28,7 @@ import org.keycloak.services.messages.Messages;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
-public final class UsernameForm extends UsernamePasswordForm {
+public  class UsernameForm extends UsernamePasswordForm {
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {

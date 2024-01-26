@@ -101,6 +101,8 @@ public class Profile {
         MULTI_SITE("Multi-site support", Type.PREVIEW),
         ;
 
+
+
         private final Type type;
         private final String label;
 

@@ -1,7 +1,6 @@
 package org.keycloak.authentication.authenticators.util;
 
 import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -10,7 +9,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.keycloak.authentication.AuthenticationFlowContext;
-import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.dom.saml.v2.ac.BooleanType;
 import org.keycloak.events.Details;
@@ -36,7 +34,7 @@ public class RecaptchaUtil {
     public static final String SITE_KEY = "site.key";
     public static final String SITE_SECRET = "secret";
 
-    public static void authenticateRecaptcha(AuthenticationFlowContext context) {
+    public static void addCaptcha(AuthenticationFlowContext context) {
         AuthenticatorConfigModel captchaConfig = context.getAuthenticatorConfig();
         LoginFormsProvider form = context.form();
         if (captchaConfig == null || captchaConfig.getConfig() == null) {

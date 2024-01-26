@@ -19,6 +19,7 @@ package org.keycloak.authentication.authenticators.browser;
 
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.CredentialValidator;
+import org.keycloak.authentication.authenticators.util.RecaptchaUtil;
 import org.keycloak.credential.CredentialProvider;
 import org.keycloak.credential.PasswordCredentialProvider;
 import org.keycloak.forms.login.LoginFormsProvider;
@@ -33,11 +34,13 @@ import jakarta.ws.rs.core.Response;
 public class PasswordForm extends UsernamePasswordForm implements CredentialValidator<PasswordCredentialProvider> {
 
     protected boolean validateForm(AuthenticationFlowContext context, MultivaluedMap<String, String> formData) {
+        RecaptchaUtil.validate(context);
         return validatePassword(context, context.getUser(), formData, false);
     }
 
     @Override
     public void authenticate(AuthenticationFlowContext context) {
+        RecaptchaUtil.addCaptcha(context);
         Response challengeResponse = context.form().createLoginPassword();
         context.challenge(challengeResponse);
     }
@@ -57,6 +60,7 @@ public class PasswordForm extends UsernamePasswordForm implements CredentialVali
         return form.createLoginPassword();
     }
 
+
     @Override
     protected String getDefaultChallengeMessage(AuthenticationFlowContext context) {
         return Messages.INVALID_PASSWORD;
@@ -66,4 +70,6 @@ public class PasswordForm extends UsernamePasswordForm implements CredentialVali
     public PasswordCredentialProvider getCredentialProvider(KeycloakSession session) {
         return (PasswordCredentialProvider)session.getProvider(CredentialProvider.class, "keycloak-password");
     }
+
+
 }

@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkkew_shadow=self.webpackChunkkew_shadow||[]).push([[8959],{8959:(e,s,t)=>{t.r(s),t.d(s,{default:()=>a});var o=t(184);function a(e){const{kcContext:s,i18n:t,doUseDefaultCss:a,Template:l,classes:c}=e;return console.log("TODO: Do something with: ".concat(s.someCustomValue)),(0,o.jsx)(l,{kcContext:s,i18n:t,doUseDefaultCss:a,classes:c,active:"my-extra-page-2",children:(0,o.jsx)("h1",{children:"Hello world 2"})})}}}]);
+//# sourceMappingURL=8959.84f65c0c.chunk.js.map

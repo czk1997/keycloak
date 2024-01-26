@@ -41,6 +41,7 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -80,7 +81,7 @@ public class OTPFormAuthenticator extends AbstractUsernameFormAuthenticator impl
         if (credentialId == null || credentialId.isEmpty()) {
             OTPCredentialModel defaultOtpCredential = getCredentialProvider(context.getSession())
                     .getDefaultCredential(context.getSession(), context.getRealm(), context.getUser());
-            credentialId = defaultOtpCredential==null ? "" : defaultOtpCredential.getId();
+            credentialId = defaultOtpCredential == null ? "" : defaultOtpCredential.getId();
         }
         context.getEvent().detail(Details.SELECTED_CREDENTIAL_ID, credentialId);
 
@@ -93,7 +94,7 @@ public class OTPFormAuthenticator extends AbstractUsernameFormAuthenticator impl
         }
 
         if (otp == null) {
-            Response challengeResponse = challenge(context,null);
+            Response challengeResponse = challenge(context, null);
             context.challenge(challengeResponse);
             return;
         }
@@ -142,7 +143,7 @@ public class OTPFormAuthenticator extends AbstractUsernameFormAuthenticator impl
     }
 
     public List<RequiredActionFactory> getRequiredActions(KeycloakSession session) {
-        return Collections.singletonList((UpdateTotp)session.getKeycloakSessionFactory().getProviderFactory(RequiredActionProvider.class, UserModel.RequiredAction.CONFIGURE_TOTP.name()));
+        return Collections.singletonList((UpdateTotp) session.getKeycloakSessionFactory().getProviderFactory(RequiredActionProvider.class, UserModel.RequiredAction.CONFIGURE_TOTP.name()));
     }
 
     @Override
@@ -152,7 +153,7 @@ public class OTPFormAuthenticator extends AbstractUsernameFormAuthenticator impl
 
     @Override
     public OTPCredentialProvider getCredentialProvider(KeycloakSession session) {
-        return (OTPCredentialProvider)session.getProvider(CredentialProvider.class, OTPCredentialProviderFactory.PROVIDER_ID);
+        return (OTPCredentialProvider) session.getProvider(CredentialProvider.class, OTPCredentialProviderFactory.PROVIDER_ID);
     }
 
 }

@@ -23,6 +23,7 @@ import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.forms.login.freemarker.model.WebAuthnAuthenticatorsBean;
 import org.keycloak.models.*;
 import org.keycloak.models.credential.PasswordCredentialModel;
+import org.keycloak.models.credential.WebAuthnCredentialModel;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.messages.Messages;
@@ -52,14 +53,15 @@ import static org.keycloak.services.messages.Messages.WEBAUTHN_ERROR_USER_NOT_FO
  * The rendered custom form contains the webauthn challenge for the case that you want to sign in with passkey.
  * If chosen otherwise we continue to the next authenticator configured in the browser-flow.
  */
-public class PasskeyLoginFormAuthenticator extends WebAuthnPasswordlessAuthenticator {
+public class PasskeyLoginFormAuthenticator extends  UsernameForm {
 
     private static final String TPL_CODE = "passkey-login-form.ftl";
     private static final String USERNAME_KEY = "username";
     private KeycloakSession session;
+    protected static final String USER_SET_BEFORE_USERNAME_PASSWORD_AUTH = "USER_SET_BEFORE_USERNAME_PASSWORD_AUTH";
+
 
     public PasskeyLoginFormAuthenticator(KeycloakSession session) {
-        super(session);
         this.session = session;
     }
 
@@ -107,7 +109,6 @@ public class PasskeyLoginFormAuthenticator extends WebAuthnPasswordlessAuthentic
             // NOP
         }
         form.setAttribute(WebAuthnConstants.IS_USER_IDENTIFIED, Boolean.toString(isUserIdentified));
-
         // read options from policy
         String userVerificationRequirement = policy.getUserVerificationRequirement();
         form.setAttribute(WebAuthnConstants.USER_VERIFICATION, userVerificationRequirement);
@@ -150,9 +151,13 @@ public class PasskeyLoginFormAuthenticator extends WebAuthnPasswordlessAuthentic
                 handleNoPasswordError(context);
                 return;
             }
-
             //User is required for the built-in password form authenticator to work: org.keycloak.authentication.authenticators.browser.PasswordForm
+
             context.setUser(user);
+            LoginFormsProvider form = context.form();
+            form.setAttribute(LoginFormsProvider.USERNAME_HIDDEN, true);
+            form.setAttribute(LoginFormsProvider.REGISTRATION_DISABLED, true);
+            context.getAuthenticationSession().setAuthNote(USER_SET_BEFORE_USERNAME_PASSWORD_AUTH, "true");
             //Call attempted to signal keycloak to call the next "Alternative" in the authentication flow.
             context.attempted();
         }
@@ -165,6 +170,10 @@ public class PasskeyLoginFormAuthenticator extends WebAuthnPasswordlessAuthentic
     private boolean isPasskeyLogin(MultivaluedMap<String, String> params) {
         return (StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.CREDENTIAL_ID)) && StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.AUTHENTICATOR_DATA)) && StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.CLIENT_DATA_JSON))
                 && StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.SIGNATURE)) && StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.USER_HANDLE))) || hasWebAuthnFailed(params);
+    }
+
+    protected WebAuthnPolicy getWebAuthnPolicy(AuthenticationFlowContext context) {
+        return context.getRealm().getWebAuthnPolicy();
     }
 
     /**
@@ -380,5 +389,19 @@ public class PasskeyLoginFormAuthenticator extends WebAuthnPasswordlessAuthentic
         return errorResponse;
     }
 
+    protected String getRpID(AuthenticationFlowContext context) {
+        WebAuthnPolicy policy = getWebAuthnPolicy(context);
+        String rpId = policy.getRpId();
+        if (rpId == null || rpId.isEmpty()) rpId = context.getUriInfo().getBaseUri().getHost();
+        return rpId;
+    }
+
+    protected String getCredentialType() {
+        return WebAuthnCredentialModel.TYPE_TWOFACTOR;
+    }
+
+    protected boolean shouldDisplayAuthenticators(AuthenticationFlowContext context) {
+        return context.getUser() != null;
+    }
 
 }
