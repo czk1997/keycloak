@@ -6,7 +6,6 @@ import com.webauthn4j.data.client.challenge.Challenge;
 import com.webauthn4j.data.client.challenge.DefaultChallenge;
 import com.webauthn4j.server.ServerProperty;
 import com.webauthn4j.util.exception.WebAuthnException;
-import jakarta.ws.rs.core.Form;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import org.keycloak.WebAuthnConstants;
@@ -23,15 +22,12 @@ import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.forms.login.freemarker.model.WebAuthnAuthenticatorsBean;
 import org.keycloak.models.*;
 import org.keycloak.models.credential.PasswordCredentialModel;
-import org.keycloak.models.credential.WebAuthnCredentialModel;
 import org.keycloak.models.utils.FormMessage;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.services.messages.Messages;
-import org.keycloak.utils.StringUtil;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -53,15 +49,14 @@ import static org.keycloak.services.messages.Messages.WEBAUTHN_ERROR_USER_NOT_FO
  * The rendered custom form contains the webauthn challenge for the case that you want to sign in with passkey.
  * If chosen otherwise we continue to the next authenticator configured in the browser-flow.
  */
-public class PasskeyLoginFormAuthenticator extends  UsernameForm {
+public class PasskeyLoginFormAuthenticator extends WebAuthnPasswordlessAuthenticator {
 
     private static final String TPL_CODE = "passkey-login-form.ftl";
     private static final String USERNAME_KEY = "username";
     private KeycloakSession session;
-    protected static final String USER_SET_BEFORE_USERNAME_PASSWORD_AUTH = "USER_SET_BEFORE_USERNAME_PASSWORD_AUTH";
-
 
     public PasskeyLoginFormAuthenticator(KeycloakSession session) {
+        super(session);
         this.session = session;
     }
 
@@ -109,6 +104,7 @@ public class PasskeyLoginFormAuthenticator extends  UsernameForm {
             // NOP
         }
         form.setAttribute(WebAuthnConstants.IS_USER_IDENTIFIED, Boolean.toString(isUserIdentified));
+
         // read options from policy
         String userVerificationRequirement = policy.getUserVerificationRequirement();
         form.setAttribute(WebAuthnConstants.USER_VERIFICATION, userVerificationRequirement);
@@ -151,13 +147,9 @@ public class PasskeyLoginFormAuthenticator extends  UsernameForm {
                 handleNoPasswordError(context);
                 return;
             }
-            //User is required for the built-in password form authenticator to work: org.keycloak.authentication.authenticators.browser.PasswordForm
 
+            //User is required for the built-in password form authenticator to work: org.keycloak.authentication.authenticators.browser.PasswordForm
             context.setUser(user);
-            LoginFormsProvider form = context.form();
-            form.setAttribute(LoginFormsProvider.USERNAME_HIDDEN, true);
-            form.setAttribute(LoginFormsProvider.REGISTRATION_DISABLED, true);
-            context.getAuthenticationSession().setAuthNote(USER_SET_BEFORE_USERNAME_PASSWORD_AUTH, "true");
             //Call attempted to signal keycloak to call the next "Alternative" in the authentication flow.
             context.attempted();
         }
@@ -168,12 +160,8 @@ public class PasskeyLoginFormAuthenticator extends  UsernameForm {
      * @return true, if the user attempted to sign in with passkey. This can be determined by checking the submitted form parameters.
      */
     private boolean isPasskeyLogin(MultivaluedMap<String, String> params) {
-        return (StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.CREDENTIAL_ID)) && StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.AUTHENTICATOR_DATA)) && StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.CLIENT_DATA_JSON))
-                && StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.SIGNATURE)) && StringUtil.isNotBlank(params.getFirst(WebAuthnConstants.USER_HANDLE))) || hasWebAuthnFailed(params);
-    }
-
-    protected WebAuthnPolicy getWebAuthnPolicy(AuthenticationFlowContext context) {
-        return context.getRealm().getWebAuthnPolicy();
+        return (params.getFirst(WebAuthnConstants.CREDENTIAL_ID) != null && params.getFirst(WebAuthnConstants.AUTHENTICATOR_DATA) != null && params.getFirst(WebAuthnConstants.CLIENT_DATA_JSON) != null
+                && params.getFirst(WebAuthnConstants.SIGNATURE) != null && params.getFirst(WebAuthnConstants.USER_HANDLE) != null) || hasWebAuthnFailed(params);
     }
 
     /**
@@ -330,7 +318,6 @@ public class PasskeyLoginFormAuthenticator extends  UsernameForm {
         List<CredentialModel> credentialModels = user.credentialManager().getStoredCredentialsStream().collect(Collectors.toList());
         return !credentialModels.stream().anyMatch((cred -> cred.getType().equals(PasswordCredentialModel.TYPE)));
     }
-
     private void handleNoPasswordError(AuthenticationFlowContext context) {
         LoginFormsProvider form = createLoginFormWithWebauthnChallenge(context);
         if (form != null) {
@@ -389,19 +376,5 @@ public class PasskeyLoginFormAuthenticator extends  UsernameForm {
         return errorResponse;
     }
 
-    protected String getRpID(AuthenticationFlowContext context) {
-        WebAuthnPolicy policy = getWebAuthnPolicy(context);
-        String rpId = policy.getRpId();
-        if (rpId == null || rpId.isEmpty()) rpId = context.getUriInfo().getBaseUri().getHost();
-        return rpId;
-    }
-
-    protected String getCredentialType() {
-        return WebAuthnCredentialModel.TYPE_TWOFACTOR;
-    }
-
-    protected boolean shouldDisplayAuthenticators(AuthenticationFlowContext context) {
-        return context.getUser() != null;
-    }
 
 }

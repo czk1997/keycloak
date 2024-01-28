@@ -21,6 +21,7 @@ import org.jboss.logging.Logger;
 import org.keycloak.authentication.AbstractFormAuthenticator;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
+import org.keycloak.authentication.authenticators.util.RecaptchaUtil;
 import org.keycloak.credential.hash.PasswordHashProvider;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
@@ -88,7 +89,7 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
         return Messages.INVALID_USER;
     }
 
-    protected String disabledByBruteForceFieldError(){
+    protected String disabledByBruteForceFieldError() {
         return FIELD_USERNAME;
     }
 
@@ -145,7 +146,7 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
     }
 
 
-    public boolean validateUserAndPassword(AuthenticationFlowContext context, MultivaluedMap<String, String> inputData)  {
+    public boolean validateUserAndPassword(AuthenticationFlowContext context, MultivaluedMap<String, String> inputData) {
         UserModel user = getUser(context, inputData);
         boolean shouldClearUserFromCtxAfterBadPassword = !isUserAlreadySetBeforeUsernamePasswordAuth(context);
         return user != null && validatePassword(context, user, inputData, shouldClearUserFromCtxAfterBadPassword) && validateUser(context, user, inputData);
@@ -222,7 +223,7 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
     public boolean validatePassword(AuthenticationFlowContext context, UserModel user, MultivaluedMap<String, String> inputData, boolean clearUser) {
         String password = inputData.getFirst(CredentialRepresentation.PASSWORD);
         if (password == null || password.isEmpty()) {
-            return badPasswordHandler(context, user, clearUser,true);
+            return badPasswordHandler(context, user, clearUser, true);
         }
 
         if (isDisabledByBruteForce(context, user)) return false;
@@ -230,12 +231,12 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
         if (password != null && !password.isEmpty() && user.credentialManager().isValid(UserCredentialModel.password(password))) {
             return true;
         } else {
-            return badPasswordHandler(context, user, clearUser,false);
+            return badPasswordHandler(context, user, clearUser, false);
         }
     }
 
     // Set up AuthenticationFlowContext error.
-    private boolean badPasswordHandler(AuthenticationFlowContext context, UserModel user, boolean clearUser,boolean isEmptyPassword) {
+    private boolean badPasswordHandler(AuthenticationFlowContext context, UserModel user, boolean clearUser, boolean isEmptyPassword) {
         context.getEvent().user(user);
         context.getEvent().error(Errors.INVALID_USER_CREDENTIALS);
 
@@ -246,9 +247,10 @@ public abstract class AbstractUsernameFormAuthenticator extends AbstractFormAuth
         }
 
         Response challengeResponse = challenge(context, getDefaultChallengeMessage(context), FIELD_PASSWORD);
-        if(isEmptyPassword) {
+        RecaptchaUtil.addCaptcha(context);
+        if (isEmptyPassword) {
             context.forceChallenge(challengeResponse);
-        }else{
+        } else {
             context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challengeResponse);
         }
 

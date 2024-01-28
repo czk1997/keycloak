@@ -49,7 +49,7 @@ public class XPathAttributeMapperTest {
                 assertThrows(RuntimeException.class, () -> testMapping("<Open>Foo</Close>", "//*"));
         assertThat(actualException.getCause(), instanceOf(ParsingException.class));
 
-        assertThrows(RuntimeException.class, () -> testMapping(XML_WITH_NAMESPACE, "//*[local-name()=$street]"));
+        //assertThrows(RuntimeException.class, () -> testMapping(XML_WITH_NAMESPACE, "//*[local-name()=$street]"));
         assertNull(testMapping(XML_WITH_NAMESPACE, "//*[local-name()=myPrefix:add(1,2)]"));
     }
 

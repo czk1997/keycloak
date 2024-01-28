@@ -19,7 +19,7 @@
     <parent>
         <groupId>org.keycloak</groupId>
         <artifactId>feature-packs-parent</artifactId>
-        <version>24.0.4.shadow</version>
+        <version>123.0.4</version>
     </parent>
 
     <properties>

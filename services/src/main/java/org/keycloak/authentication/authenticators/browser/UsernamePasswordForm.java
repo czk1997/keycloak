@@ -19,6 +19,7 @@ package org.keycloak.authentication.authenticators.browser;
 
 import org.jboss.resteasy.specimpl.MultivaluedMapImpl;
 import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.authenticators.util.RecaptchaUtil;
 import org.keycloak.forms.login.LoginFormsProvider;
@@ -31,6 +32,9 @@ import org.keycloak.services.managers.AuthenticationManager;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+import org.keycloak.services.messages.Messages;
+
+import static org.keycloak.services.validation.Validation.FIELD_PASSWORD;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
@@ -53,9 +57,13 @@ public class UsernamePasswordForm extends AbstractUsernameFormAuthenticator impl
         }
         boolean captchaResult = RecaptchaUtil.validate(context);
         if (!captchaResult) {
+            RecaptchaUtil.addCaptcha(context);
+            Response challengeResponse = challenge(context, Messages.RECAPTCHA_FAILED);
+            context.failureChallenge(AuthenticationFlowError.CAPTCHA_REQUIRED, challengeResponse);
             return;
         }
         if (!validateForm(context, formData)) {
+            RecaptchaUtil.addCaptcha(context);
             return;
         }
         context.success();

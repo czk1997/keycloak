@@ -75,9 +75,8 @@ public class RecaptchaUtil {
             String secret = captchaConfig.getConfig().get(SITE_SECRET);
             success = validateRecaptcha(context, success, captcha, secret);
         }
-        if (success) {
-            context.success();
-        } else {
+        if (!success) {
+            addCaptcha(context);
             errors.add(new FormMessage(null, Messages.RECAPTCHA_FAILED));
             formData.remove(G_RECAPTCHA_RESPONSE);
         }
